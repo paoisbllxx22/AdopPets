@@ -9,3 +9,5 @@ python-jose[cryptography]
 passlib[bcrypt]
 email-validator
 PyJWT
+httpx
+requests
