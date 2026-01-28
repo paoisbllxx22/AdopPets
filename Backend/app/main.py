@@ -1,24 +1,17 @@
-#main.py
 from fastapi import FastAPI
-from fastapi.responses import RedirectResponse
-from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from app.routers import (
     user,
     post,
     chat,
-    auth_front,
-    home_front,
-    profile,
-    password_reset,
-    email_verify,
+    profile, # Profile API might be useful, keep it for now if it has logic
 )
 import os
 
 app = FastAPI()
 
 # ============================
-# Directorio para uploads
+# Directorio para uploads (Necesario para gaurdar imagenes)
 # ============================
 os.makedirs("uploads", exist_ok=True)
 
@@ -29,34 +22,19 @@ app.mount(
     name="uploads"
 )
 
-# Archivos estáticos del frontend
-app.mount(
-    "/static",
-    StaticFiles(directory="app/static"),
-    name="static"
-)
-
-# Templates HTML
-templates = Jinja2Templates(directory="app/templates")
-
-
 # ============================
 # ROOT
 # ============================
 @app.get("/")
 async def root():
-    return RedirectResponse(url="/login", status_code=302)
+    return {"message": "AdopPets API Backend v2.0"}
 
 
 # ============================
-# Routers
+# Routers API
 # ============================
 app.include_router(user.router)
 app.include_router(post.router)
 app.include_router(chat.router)
-app.include_router(auth_front.router)
-app.include_router(home_front.router)
-app.include_router(profile.router)
-app.include_router(password_reset.router)
-app.include_router(email_verify.router) 
+app.include_router(profile.router) 
 
