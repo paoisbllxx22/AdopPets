@@ -19,9 +19,9 @@ async def get_current_user(
         # Para simplificar dependencias de redirección, lanzamos 401 y el router maneja
         raise HTTPException(status_code=401, detail="Token no encontrado")
 
-    # 2) URL segura
-    base = settings.AUTH_SERVICE_URL.rstrip("/")
-    url = f"{base}/auth/me"
+    # 2) URL segura (apuntar al Backend Service, ya no a auth-service)
+    base = settings.BACKEND_URL.rstrip("/")
+    url = f"{base}/users/me"
 
     # 3) Validar token con Auth Service
     try:
