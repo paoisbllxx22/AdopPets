@@ -6,8 +6,9 @@ import uuid
 # - Puerto 30000: API Backend Directa (JSON/Data puro) -> Lo que vamos a probar aquí.
 # - Puerto 30001: Frontend Visual (HTML) -> Donde ves la página web.
 #
-# Si el script falla conectando, verifica que el puerto 30000 esté abierto en el Firewall de Google Cloud.
-BASE_URL = "http://34.51.71.65:30000" 
+# URL del Backend
+# Al probar DENTRO de la VPS, usamos localhost:30000
+BASE_URL = "http://localhost:30000" 
 
 async def test_register_and_login():
     random_id = str(uuid.uuid4())[:8]
