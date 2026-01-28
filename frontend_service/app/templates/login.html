@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Login | AdopPet</title>
+
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="login-body">
+
+<div class="login-container">
+
+    <div class="login-card">
+        <h1 class="app-title">AdopPet</h1>
+
+        <p class="login-label">Ingresa tu correo</p>
+
+        <form method="post" action="/login" class="login-form">
+            <input
+                type="email"
+                name="email"
+                placeholder="ej: paoisblxx22@mail.com"
+                required
+                class="login-input"
+            />
+
+            <input
+                type="password"
+                name="password"
+                placeholder="Contraseña"
+                required
+                class="login-input"
+            />
+
+            <button type="submit" class="login-button">
+                INGRESAR
+            </button>
+        </form>
+
+        {% if error %}
+        <p class="login-error">{{ error }}</p>
+        {% endif %}
+
+        <p class="login-subtext">¿Aún no tienes una cuenta?</p>
+        <a href="/register" class="login-secondary-button">
+        REGISTRAR USUARIO
+</a>
+<a href="/forgot-password" class="auth-link">
+    ¿Olvidaste tu contraseña?
+</a>
+
+
+
+
+    </div>
+
+</div>
+
+</body>
+</html>

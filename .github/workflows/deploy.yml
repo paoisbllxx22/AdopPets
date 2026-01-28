@@ -39,10 +39,14 @@ jobs:
             echo "🔨 Building Auth Service Image..."
             docker build -t auth-service:latest ./auth_service
 
+            echo "🔨 Building Frontend Service Image..."
+            docker build -t frontend-service:latest ./frontend_service
+
             # Export to K3s
             echo "📦 Importing images to K3s..."
             docker save backend-service:latest | sudo k3s ctr images import -
             docker save auth-service:latest | sudo k3s ctr images import -
+            docker save frontend-service:latest | sudo k3s ctr images import -
 
             # Apply Kubernetes Configurations
             echo "☸️  Applying Manifests..."
@@ -52,5 +56,6 @@ jobs:
             echo "🔄 Restarting Deployments..."
             sudo kubectl rollout restart deployment backend-service
             sudo kubectl rollout restart deployment auth-service
+            sudo kubectl rollout restart deployment frontend-service
 
             echo "✅ Deployment Successful!"
