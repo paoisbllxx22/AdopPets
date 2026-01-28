@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Verificar código | AdopPet</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body class="login-body">
+    <div class="login-container">
+        <div class="login-card">
+
+            <h1 class="app-title">AdopPet</h1>
+
+            <p class="auth-text">
+                Hemos enviado un código a<br>
+                <span class="auth-highlight">{{ email }}</span>.
+                <br>
+                Ingresa el código a continuación para continuar.
+            </p>
+
+            {# ✅ flow puede ser: "email_verify" o "password_reset". Si no viene, default "password_reset" #}
+            {% set flow_value = flow if flow else "password_reset" %}
+            {% if flow_value == "email_verify" %}
+                {% set verify_action = "/email-verify/verify" %}
+                {% set resend_action = "/email-verify/resend" %}
+                {% set main_button = "Verificar correo" %}
+            {% else %}
+                {% set verify_action = "/password-reset/verify" %}
+                {% set resend_action = "/password-reset/request" %}
+                {% set main_button = "Verificar código" %}
+            {% endif %}
+
+            <!-- Verificar código -->
+            <form action="{{ verify_action }}" method="post">
+                <input type="hidden" name="email" value="{{ email }}">
+                <input type="hidden" name="flow" value="{{ flow_value }}">
+
+                <label class="login-label" for="code">
+                    Código de verificación
+                </label>
+
+                <input
+                    type="text"
+                    id="code"
+                    name="code"
+                    class="login-input"
+                    placeholder="Ej: 123456"
+                    required
+                >
+
+                <div class="auth-actions">
+                    <button type="submit" class="login-button">
+                        {{ main_button }}
+                    </button>
+                </div>
+            </form>
+
+            <!-- Acciones secundarias -->
+            <div class="auth-actions">
+
+                <!-- reenviar -->
+                <form action="{{ resend_action }}" method="post">
+                    <input type="hidden" name="email" value="{{ email }}">
+                    <input type="hidden" name="flow" value="{{ flow_value }}">
+                    <button type="submit" class="login-button secondary">
+                        Enviar código nuevamente
+                    </button>
+                </form>
+
+                <a href="/login" class="login-button secondary">
+                    Volver al login
+                </a>
+
+            </div>
+
+            <!-- Error -->
+            {% if error %}
+                <p class="form-error">
+                    {{ error }}
+                </p>
+
+                <!-- Popup -->
+                <div class="popup-overlay">
+                    <div class="popup-card">
+                        <p>{{ error }}</p>
+                        <button type="button" id="popup-close" class="login-button">
+                            Aceptar
+                        </button>
+                    </div>
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const popup = document.querySelector(".popup-overlay");
+            const btn = document.getElementById("popup-close");
+            if (popup && btn) {
+                btn.addEventListener("click", () => {
+                    popup.style.display = "none";
+                });
+            }
+        });
+    </script>
+</body>
+</html>

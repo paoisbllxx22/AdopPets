@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend-service
+  template:
+    metadata:
+      labels:
+        app: backend-service
+    spec:
+      containers:
+      - name: backend-service
+        # Placeholder image name - you will need to build this: docker build -t backend-service:latest .
+        image: backend-service:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8000
+        env:
+        - name: MONGO_URL
+          value: "mongodb://mongo:27017/adoppets_db"
+        - name: AUTH_SERVICE_URL
+          value: "http://auth-service" # Connecting to the service we defined in auth-service.yaml
+        - name: SECRET_KEY
+          value: "adoppets_super_secret_key"
+        - name: ACCESS_TOKEN_EXPIRE_MINUTES
+          value: "300"
+        - name: ALGORITHM
+          value: "HS256"
+        - name: UPLOAD_DIR
+          value: "uploads"
+        - name: EMAIL_HOST
+          value: "smtp.gmail.com"
+        - name: EMAIL_PORT
+          value: "587"
+        - name: EMAIL_USER
+          value: "paola.gamboa22xx@gmail.com"
+        - name: EMAIL_PASSWORD
+          value: "riohlvpxljiatqlg"
+        - name: EMAIL_FROM
+          value: "AdopPet <paola.gamboa22xx@gmail.com>"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+spec:
+  selector:
+    app: backend-service
+  type: LoadBalancer # Expose to outside world (localhost usually)
+  ports:
+  - port: 8000
+    targetPort: 8000

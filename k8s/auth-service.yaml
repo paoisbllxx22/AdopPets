@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+      - name: auth-service
+        # Placeholder image name - you will need to build this: docker build -t auth-service:latest .
+        image: auth-service:latest 
+        imagePullPolicy: Never # Use local image for development (minikube/docker desktop)
+        ports:
+        - containerPort: 8000
+        env:
+        - name: MONGO_URL
+          value: "mongodb://mongo:27017/adoppets_auth_db"
+        - name: SECRET_KEY
+          value: "TU_MISMA_SECRET_DEL_MONOLITO"
+        - name: ALGORITHM
+          value: "HS256"
+        - name: ACCESS_TOKEN_EXPIRE_MINUTES
+          value: "60"
+        - name: FRONTEND_BASE_URL
+          value: "http://backend-service:8000"
+        - name: DEBUG_EMAIL
+          value: "true"
+        - name: EMAIL_HOST
+          value: "smtp.gmail.com"
+        - name: EMAIL_PORT
+          value: "587"
+        - name: EMAIL_USER
+          value: "paola.gamboa22xx@gmail.com"
+        - name: EMAIL_PASSWORD
+          value: "riohlvpxljiatqlg"
+        - name: EMAIL_FROM
+          value: "AdopPet <paola.gamboa22xx@gmail.com>"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+spec:
+  selector:
+    app: auth-service
+  ports:
+  - port: 80
+    targetPort: 8000

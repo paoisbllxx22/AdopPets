@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+jinja2
+python-multipart
+aiofiles
+motor
+pydantic-settings
+python-jose[cryptography]
+passlib[bcrypt]
+email-validator

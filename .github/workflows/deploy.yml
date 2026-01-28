@@ -1,0 +1,56 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+      - master  # Adjust if your branch is named 'master'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            # Stop script on first error
+            set -e
+
+            echo "🚀 Starting Deployment..."
+
+            # Navigate to the project folder
+            # IMPORTANT: This folder must be a git repository (git clone)
+            cd ~/AdopPets
+
+            # Pull latest changes
+            echo "📥 Pulling latest code..."
+            git checkout main
+            git pull origin main
+
+            # Rebuild Docker Images
+            echo "🔨 Building Backend Image..."
+            docker build -t backend-service:latest ./Backend
+
+            echo "🔨 Building Auth Service Image..."
+            docker build -t auth-service:latest ./auth_service
+
+            # Export to K3s
+            echo "📦 Importing images to K3s..."
+            docker save backend-service:latest | sudo k3s ctr images import -
+            docker save auth-service:latest | sudo k3s ctr images import -
+
+            # Apply Kubernetes Configurations
+            echo "☸️  Applying Manifests..."
+            sudo kubectl apply -f k8s/
+
+            # Force Restart Pods (to ensure they use the new image)
+            echo "🔄 Restarting Deployments..."
+            sudo kubectl rollout restart deployment backend-service
+            sudo kubectl rollout restart deployment auth-service
+
+            echo "✅ Deployment Successful!"
