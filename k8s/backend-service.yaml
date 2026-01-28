@@ -12,8 +12,7 @@ spec:
       labels:
         app: backend-service
     spec:
-      hostNetwork: true
-      dnsPolicy: ClusterFirstWithHostNet
+
       containers:
       - name: backend-service
         # Placeholder image name - you will need to build this: docker build -t backend-service:latest .
@@ -52,10 +51,9 @@ metadata:
 spec:
   selector:
     app: backend-service
-  type: LoadBalancer
-  externalIPs:
-  - 34.51.71.65  # Forzamos que escuche en tu IP pública
+  type: NodePort
   ports:
   - port: 8000
     targetPort: 8000
+    nodePort: 30000
 
