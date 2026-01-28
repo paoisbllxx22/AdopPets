@@ -32,6 +32,9 @@ async def login_page(request: Request):
 # ============================
 # LOGIN (POST)
 # ============================
+# ============================
+# LOGIN (POST)
+# ============================
 @router.post("/login")
 async def login_submit(
     request: Request,
@@ -39,13 +42,15 @@ async def login_submit(
     password: str = Form(...)
 ):
     async with httpx.AsyncClient() as client:
+        # Backend espera JSON para Login (UserLogin logic)
         resp = await client.post(
-            f"{settings.AUTH_SERVICE_URL}/auth/login",
+            f"{settings.BACKEND_URL}/users/login",
             json={"email": email, "password": password},
             timeout=10
         )
 
     # ✅ Si el auth_service dice "no verificado" -> ir a pantalla de verificación
+    # (Adaptar si el backend devuelve un código específico para esto)
     if resp.status_code == 403:
         return RedirectResponse(url=f"/email-verify?email={email}", status_code=302)
 
@@ -99,42 +104,56 @@ async def register_submit(
             status_code=400
         )
 
-    # 2️⃣ Guardar imagen (si existe) - NO rompe lo que ya tienes
-    profile_image_url = None
+    # 2️⃣ Preparar datos para enviar al Backend
+    # Backend espera Form Data para /users/register
+    data_payload = {
+        "name": name,
+        "email": email,
+        "password": password
+    }
+    
+    files_payload = None
     if file and file.filename:
-        if not file.content_type.startswith("image/"):
-            return templates.TemplateResponse(
-                "register.html",
-                {"request": request, "error": "El archivo debe ser una imagen."},
-                status_code=400
+        # Leemos el archivo para re-enviarlo
+        file_content = await file.read()
+        files_payload = {
+            "file": (file.filename, file_content, file.content_type)
+        }
+        await file.seek(0) # Resetear puntero por si acaso se necesitara leer de nuevo (aunque aquí terminamos)
+
+    # 3️⃣ Registrar en Backend Service
+    async with httpx.AsyncClient() as client:
+        if files_payload:
+            resp = await client.post(
+                f"{settings.BACKEND_URL}/users/register",
+                data=data_payload,
+                files=files_payload,
+                timeout=10
+            ) 
+        else:
+            resp = await client.post(
+                f"{settings.BACKEND_URL}/users/register",
+                data=data_payload,
+                timeout=10
             )
 
-        ext = file.filename.split(".")[-1]
-        filename = f"{uuid.uuid4()}.{ext}"
-        path = f"uploads/{filename}"
-
-        with open(path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-
-        profile_image_url = f"http://localhost:8000/uploads/{filename}"
-
-    # 3️⃣ Registrar en Auth Service (ahora manda código)
-    async with httpx.AsyncClient() as client:
-        resp = await client.post(
-            f"{settings.AUTH_SERVICE_URL}/auth/register",
-            json={"name": name, "email": email, "password": password},
-            timeout=10
-        )
-
     if resp.status_code != 200:
+        # Intentar obtener detalle del error del backend
+        try:
+            detail = resp.json().get("detail", "Error en el registro.")
+        except:
+            detail = "Ya existe un usuario con ese correo o hubo un error."
+            
         return templates.TemplateResponse(
             "register.html",
-            {"request": request, "error": "Ya existe un usuario con ese correo."},
+            {"request": request, "error": detail},
             status_code=400
         )
 
-    # ✅ 4️⃣ En vez de /login, ir a verificar email
-    return RedirectResponse(url=f"/email-verify?email={email}", status_code=302)
+    # ✅ 4️⃣ Al finalizar registro, ir a login (o home si login automático)
+    # Backend devuelve el usuario creado, pero no un token en register. 
+    # Lo mandamos a Login para que inicie sesión.
+    return RedirectResponse(url="/login", status_code=302)
 
 
 # ============================
