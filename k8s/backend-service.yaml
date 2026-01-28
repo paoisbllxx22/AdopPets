@@ -50,7 +50,10 @@ metadata:
 spec:
   selector:
     app: backend-service
-  type: LoadBalancer # Expose to outside world (localhost usually)
+  type: LoadBalancer
+  externalIPs:
+  - 34.51.71.65  # Forzamos que escuche en tu IP pública
   ports:
   - port: 8000
     targetPort: 8000
+
