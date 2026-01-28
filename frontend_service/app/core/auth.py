@@ -37,7 +37,8 @@ async def get_current_user(
         raise HTTPException(status_code=401, detail="Token inválido o expirado")
 
     data = resp.json()
-    user_id = data.get("sub")
+    # El backend devuelve { "id": "...", "name": "...", ... } en /users/me
+    user_id = data.get("id")
     if not user_id:
         raise HTTPException(status_code=401, detail="Token inválido")
 
