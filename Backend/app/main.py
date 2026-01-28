@@ -1,5 +1,6 @@
 #main.py
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from app.routers import (
@@ -44,7 +45,7 @@ templates = Jinja2Templates(directory="app/templates")
 # ============================
 @app.get("/")
 async def root():
-    return {"message": "Backend funcionando correctamente!"}
+    return RedirectResponse(url="/login", status_code=302)
 
 
 # ============================
