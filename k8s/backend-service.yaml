@@ -12,6 +12,8 @@ spec:
       labels:
         app: backend-service
     spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       containers:
       - name: backend-service
         # Placeholder image name - you will need to build this: docker build -t backend-service:latest .
