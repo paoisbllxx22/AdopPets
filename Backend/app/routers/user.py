@@ -12,7 +12,9 @@ from app.services.users import (
     login_user,
     update_profile_image,
     verify_email_code,
-    resend_verification_code
+    resend_verification_code,
+    request_password_reset,
+    reset_password
 )
 from app.core.auth import get_current_user
 from app.db.init_db import db
@@ -26,6 +28,13 @@ class VerifyEmailRequest(BaseModel):
 
 class ResendVerificationRequest(BaseModel):
     email: EmailStr
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+class PasswordResetConfirm(BaseModel):
+    token: str
+    new_password: str
 
 
 # ============================
@@ -126,6 +135,26 @@ async def resend_verification(data: ResendVerificationRequest):
             detail="No se pudo reenviar. Verifica el correo o si ya estás verificado."
         )
     return {"message": "Código reenviado correctamente"}
+
+
+# ============================
+# RESET PASSWORD (REQUEST)
+# ============================
+@router.post("/request-password-reset")
+async def request_reset(data: PasswordResetRequest):
+    await request_password_reset(data.email)
+    return {"message": "Si el correo existe, se ha enviado un enlace."}
+
+
+# ============================
+# RESET PASSWORD (CONFIRM)
+# ============================
+@router.post("/reset-password")
+async def confirm_reset(data: PasswordResetConfirm):
+    success = await reset_password(data.token, data.new_password)
+    if not success:
+        raise HTTPException(status_code=400, detail="Token inválido o expirado")
+    return {"message": "Contraseña actualizada exitosamente."}
 
 
 # ============================

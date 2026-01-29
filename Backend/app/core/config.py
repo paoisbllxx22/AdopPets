@@ -18,6 +18,6 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
-        extra = "forbid"
+        extra = "ignore"
 
 settings = Settings()

@@ -1,8 +1,10 @@
 #services/users.py
 from app.db.init_db import db
 from app.core.security import hash_password, verify_password, create_access_token
+from app.core.email_utils import send_verification_email, send_password_reset_email
 from bson import ObjectId
 import secrets
+import uuid
 
 # -----------------------------------------
 # Crear usuario
@@ -17,8 +19,8 @@ async def create_user(data, profile_image: str | None = None):
     # Generar código de verificación simple (6 dígitos)
     verification_code = str(secrets.randbelow(1000000)).zfill(6)
 
-    # Imprimir el código en logs para que el usuario pueda verlo sin SMTP por ahora
-    print(f"📧 [MOCK EMAIL] Código para {data.email}: {verification_code}")
+    # 📧 ENVIAR EMAIL REAL
+    send_verification_email(data.email, verification_code)
 
     new_user = {
         "name": data.name,
@@ -29,6 +31,7 @@ async def create_user(data, profile_image: str | None = None):
         "verification_code": verification_code
     }
 
+    result = await db.users.insert_one(new_user)
     new_user["id"] = str(result.inserted_id)
 
     return new_user
@@ -47,7 +50,9 @@ async def resend_verification_code(email: str):
 
     # Generar nuevo código
     code = str(secrets.randbelow(1000000)).zfill(6)
-    print(f"📧 [MOCK EMAIL RESEND] Nuevo código para {email}: {code}")
+    
+    # 📧 ENVIAR EMAIL REAL
+    send_verification_email(email, code)
 
     await db.users.update_one(
         {"email": email},
@@ -55,6 +60,50 @@ async def resend_verification_code(email: str):
     )
     return True
 
+
+# -----------------------------------------
+# Solicitar Recuperación (Password Auth)
+# -----------------------------------------
+async def request_password_reset(email: str):
+    user = await db.users.find_one({"email": email})
+    if not user:
+        return True
+    
+    # Generar token único (UUID)
+    token = str(uuid.uuid4())
+    
+    # Guardar en BD
+    await db.users.update_one(
+        {"email": email},
+        {"$set": {"reset_token": token}}
+    )
+    
+    # 🔗 ENVIAR ENLACE REAL
+    # Usamos la IP pública y el puerto 30001 (Frontend)
+    link = f"http://34.51.71.65:30001/reset-password?token={token}"
+    send_password_reset_email(email, link)
+    
+    return True
+
+
+# -----------------------------------------
+# Resetear Contraseña
+# -----------------------------------------
+async def reset_password(token: str, new_password: str):
+    user = await db.users.find_one({"reset_token": token})
+    if not user:
+        return False
+    
+    hashed = hash_password(new_password)
+    
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {
+            "$set": {"hashed_password": hashed},
+            "$unset": {"reset_token": ""}
+        }
+    )
+    return True
 
 
 # -----------------------------------------

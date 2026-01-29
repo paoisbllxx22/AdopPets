@@ -172,5 +172,76 @@ async def logout():
 async def forgot_password_page(request: Request):
     return templates.TemplateResponse(
         "forgot_password.html",
-        {"request": request, "error": None}
+        {"request": request, "error": None, "message": None}
     )
+
+
+# ============================
+# FORGOT PASSWORD (POST)
+# ============================
+@router.post("/forgot-password", response_class=HTMLResponse)
+async def forgot_password_submit(request: Request, email: str = Form(...)):
+    async with httpx.AsyncClient() as client:
+        # Llama al back: /users/request-password-reset
+        url = f"{settings.BACKEND_URL.rstrip('/')}/users/request-password-reset"
+        try:
+            resp = await client.post(url, json={"email": email}, timeout=10)
+        except Exception:
+            return templates.TemplateResponse(
+                "forgot_password.html",
+                {"request": request, "error": "Error conectando al servicio.", "message": None},
+                status_code=503
+            )
+            
+    # Siempre mostramos éxito por seguridad (para no revelar si existe el email o no)
+    return templates.TemplateResponse(
+        "forgot_password.html",
+        {
+            "request": request, 
+            "error": None, 
+            "message": "Si el correo está registrado, recibirás un enlace."
+        }
+    )
+
+
+# ============================
+# RESET PASSWORD (GET)
+# ============================
+@router.get("/reset-password", response_class=HTMLResponse)
+async def reset_password_page(request: Request, token: str):
+    return templates.TemplateResponse(
+        "reset_password.html",
+        {"request": request, "token": token, "error": None}
+    )
+
+
+# ============================
+# RESET PASSWORD (POST)
+# ============================
+@router.post("/reset-password", response_class=HTMLResponse)
+async def reset_password_submit(
+    request: Request,
+    token: str = Form(...),
+    new_password: str = Form(...),
+    confirm_password: str = Form(...)
+):
+    if new_password != confirm_password:
+        return templates.TemplateResponse(
+            "reset_password.html",
+            {"request": request, "token": token, "error": "Las contraseñas no coinciden."},
+            status_code=400
+        )
+        
+    async with httpx.AsyncClient() as client:
+        url = f"{settings.BACKEND_URL.rstrip('/')}/users/reset-password"
+        resp = await client.post(url, json={"token": token, "new_password": new_password}, timeout=10)
+        
+    if resp.status_code != 200:
+        return templates.TemplateResponse(
+            "reset_password.html",
+            {"request": request, "token": token, "error": "El enlace es inválido o ha expirado."},
+            status_code=400
+        )
+        
+    # Éxito -> Redirigir a login
+    return RedirectResponse(url="/login?message=reset_ok", status_code=302)
