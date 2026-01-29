@@ -18,15 +18,7 @@ router = APIRouter(prefix="/posts", tags=["Posts"])
 templates = Jinja2Templates(directory="app/templates")
 
 
-# ============================
-# FORMULARIO CREAR PUBLICACIÓN (FRONT)
-# ============================
-@router.get("/create", response_class=HTMLResponse)
-async def create_post_page(request: Request, user_id: str = Depends(get_current_user)):
-    return templates.TemplateResponse(
-        "create_post.html",
-        {"request": request}
-    )
+
 
 
 # ============================
@@ -61,7 +53,8 @@ async def create_new_post(
     }
 
     post = await create_post(data)
-    return RedirectResponse(url="/home", status_code=302)
+    # Devolvemos JSON para que el Frontend maneje la redirección
+    return {"message": "ok", "post": post}
 
 
 # ============================

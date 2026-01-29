@@ -21,12 +21,13 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 templates = Jinja2Templates(directory="app/templates")
 
-from app.routers import auth, home, email_verify, profile
+from app.routers import auth, home, email_verify, profile, posts
 
 app.include_router(auth.router)
 app.include_router(home.router)
 app.include_router(email_verify.router)
 app.include_router(profile.router)
+app.include_router(posts.router)
 
 @app.get("/")
 async def root():
