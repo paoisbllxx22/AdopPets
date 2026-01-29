@@ -43,6 +43,13 @@ spec:
           value: "riohlvpxljiatqlg"
         - name: EMAIL_FROM
           value: "AdopPet <paola.gamboa22xx@gmail.com>"
+        volumeMounts:
+        - mountPath: "/app/uploads"
+          name: uploads-storage
+      volumes:
+      - name: uploads-storage
+        persistentVolumeClaim:
+          claimName: uploads-pvc
 ---
 apiVersion: v1
 kind: Service
