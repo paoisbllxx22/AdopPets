@@ -110,8 +110,13 @@ async def get_feed_proxy(request: Request):
                 PUBLIC_BACKEND_URL = "http://34.51.71.65:30000"
                 
                 for post in posts:
+                    # Fix Post Image
                     if post.get("image_url") and "localhost:8000" in post["image_url"]:
                         post["image_url"] = post["image_url"].replace("http://localhost:8000", PUBLIC_BACKEND_URL)
+                    
+                    # Fix User Avatar in Feed
+                    if post.get("user_profile_image") and "localhost:8000" in post["user_profile_image"]:
+                        post["user_profile_image"] = post["user_profile_image"].replace("http://localhost:8000", PUBLIC_BACKEND_URL)
                 
                 return posts
             else:
