@@ -5,7 +5,7 @@ from fastapi import (
     UploadFile,
     File,
 )
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 
 import uuid
@@ -255,3 +255,24 @@ async def reset_password_submit(
         
     # Éxito -> Redirigir a login
     return RedirectResponse(url="/login?message=reset_ok", status_code=302)
+
+
+# ============================
+# USER PROFILE (PROXY) - GET /users/me
+# ============================
+@router.get("/users/me")
+async def get_my_user_proxy(request: Request):
+    token = request.cookies.get("access_token")
+    headers = {}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+        
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.get(f"{settings.BACKEND_URL}/users/me", headers=headers, timeout=10)
+            if resp.status_code == 200:
+                return resp.json()
+            else:
+                return JSONResponse(status_code=404, content={"detail": "Not found"})
+        except Exception:
+            return JSONResponse(status_code=404, content={"detail": "Error fetching user"})

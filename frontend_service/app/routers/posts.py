@@ -87,3 +87,26 @@ async def create_post_submit(
         
     # Éxito -> Redirigir a Home
     return RedirectResponse(url="/home", status_code=302)
+
+
+# ============================
+# FEED (PROXY) - GET /posts/feed/all
+# ============================
+@router.get("/feed/all")
+async def get_feed_proxy(request: Request):
+    token = request.cookies.get("access_token")
+    headers = {}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+        
+    async with httpx.AsyncClient() as client:
+        try:
+            # Llamamos al backend: /posts/feed/all
+            resp = await client.get(f"{settings.BACKEND_URL}/posts/feed/all", headers=headers, timeout=10)
+            if resp.status_code == 200:
+                return resp.json()
+            else:
+                return []
+        except Exception as e:
+            print(f"Error fetching feed: {e}")
+            return []
