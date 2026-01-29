@@ -24,7 +24,7 @@ async function loadProfileUser() {
         const avatarEl = document.getElementById("profile-avatar");
         if (avatarEl) {
             avatarEl.src =
-                user.profile_image || "/static/img/default-avatar.png";
+                user.profile_image || "/static/img/default-avatar.svg";
         }
 
     } catch (err) {
@@ -90,7 +90,7 @@ function renderPost(post) {
 
     /* Imagen */
     const img = document.createElement("img");
-    img.src = post.image_url || "/static/img/default-avatar.png";
+    img.src = post.image_url || "/static/img/default-avatar.svg";
     img.alt = post.title || "Publicación";
 
     /* Overlay */

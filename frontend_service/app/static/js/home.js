@@ -25,7 +25,7 @@ async function loadUser() {
         currentUser = {
             id: data.id,
             name: data.name,
-            avatar: data.profile_image || "/static/img/default-avatar.png"
+            avatar: data.profile_image || "/static/img/default-avatar.svg"
         };
 
         document.getElementById("username").textContent = currentUser.name;
@@ -55,7 +55,7 @@ async function loadFeed() {
 
         posts.forEach(p => {
             const postUserAvatar =
-                p.user_profile_image || "/static/img/default-avatar.png";
+                p.user_profile_image || "/static/img/default-avatar.svg";
 
             const isMine = currentUser && p.user_id === currentUser.id;
 
@@ -69,10 +69,9 @@ async function loadFeed() {
                             >
                             <span class="post-username">${p.user_name || "Usuario"}</span>
                         </div>
-                        ${
-                            isMine
-                                ? ""
-                                : `<button
+                        ${isMine
+                    ? ""
+                    : `<button
                                         class="post-message-btn"
                                         data-user-id="${p.user_id}"
                                         data-user-name="${p.user_name || 'Usuario'}"
@@ -80,14 +79,13 @@ async function loadFeed() {
                                     >
                                         Enviar mensaje
                                    </button>`
-                        }
+                }
                     </div>
 
-                    ${
-                        p.image_url
-                            ? `<img src="${p.image_url}" class="post-image">`
-                            : ""
-                    }
+                    ${p.image_url
+                    ? `<img src="${p.image_url}" class="post-image">`
+                    : ""
+                }
 
                     <div class="post-content">
                         <h3>${p.title}</h3>

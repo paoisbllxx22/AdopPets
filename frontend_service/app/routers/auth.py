@@ -271,7 +271,14 @@ async def get_my_user_proxy(request: Request):
         try:
             resp = await client.get(f"{settings.BACKEND_URL}/users/me", headers=headers, timeout=10)
             if resp.status_code == 200:
-                return resp.json()
+                user_data = resp.json()
+                
+                # CORRECCIÓN DE IMAGEN DE PERFIL
+                PUBLIC_BACKEND_URL = "http://34.51.71.65:30000"
+                if user_data.get("profile_image") and "localhost:8000" in user_data["profile_image"]:
+                    user_data["profile_image"] = user_data["profile_image"].replace("http://localhost:8000", PUBLIC_BACKEND_URL)
+                
+                return user_data
             else:
                 return JSONResponse(status_code=404, content={"detail": "Not found"})
         except Exception:

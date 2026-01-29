@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <title>Home | AdopPet</title>
@@ -15,10 +16,7 @@
 
             <!-- Perfil usuario -->
             <div class="sidebar-profile">
-                <img id="profile-pic"
-                     class="sidebar-avatar"
-                     src="/static/img/default-avatar.png"
-                     alt="Avatar usuario">
+                <img id="profile-pic" class="sidebar-avatar" src="/static/img/default-avatar.svg" alt="Avatar usuario">
 
                 <span id="username" class="sidebar-username">
                     <!-- Nombre lo llena home.js -->
@@ -36,9 +34,9 @@
         </aside>
 
         <!-- BOTÓN FLOTANTE CREAR POST -->
-<a href="/posts/create" class="create-post-floating">
-    +
-</a>
+        <a href="/posts/create" class="create-post-floating">
+            +
+        </a>
 
         <!-- CONTENEDOR DEL FEED (DERECHA) -->
         <main class="feed-wrapper">
@@ -49,13 +47,13 @@
 
     </div>
 
-        <!-- MODAL DE CHAT -->
+    <!-- MODAL DE CHAT -->
     <div id="chat-overlay" class="chat-overlay hidden"></div>
 
     <div id="chat-modal" class="chat-modal hidden">
         <div class="chat-header">
             <div class="chat-user">
-                <img id="chat-user-avatar" class="chat-user-avatar" src="/static/img/default-avatar.png">
+                <img id="chat-user-avatar" class="chat-user-avatar" src="/static/img/default-avatar.svg">
                 <span id="chat-user-name" class="chat-user-name"></span>
             </div>
             <button id="chat-close-btn" class="chat-close-btn">✕</button>
@@ -66,12 +64,7 @@
         </div>
 
         <form id="chat-form" class="chat-input-row">
-            <input
-                id="chat-input"
-                type="text"
-                placeholder="Escribe un mensaje..."
-                autocomplete="off"
-            >
+            <input id="chat-input" type="text" placeholder="Escribe un mensaje..." autocomplete="off">
             <button type="submit" class="chat-send-btn">Enviar</button>
         </form>
     </div>
@@ -80,4 +73,5 @@
     <script src="/static/js/home.js"></script>
 
 </body>
+
 </html>

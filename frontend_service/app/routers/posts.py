@@ -104,9 +104,49 @@ async def get_feed_proxy(request: Request):
             # Llamamos al backend: /posts/feed/all
             resp = await client.get(f"{settings.BACKEND_URL}/posts/feed/all", headers=headers, timeout=10)
             if resp.status_code == 200:
-                return resp.json()
+                posts = resp.json()
+                # CORRECCIÓN DE URLs DE IMÁGENES AL VUELO
+                # Reemplazamos localhost:8000 por la IP pública del backend (Puerto 30000)
+                PUBLIC_BACKEND_URL = "http://34.51.71.65:30000"
+                
+                for post in posts:
+                    if post.get("image_url") and "localhost:8000" in post["image_url"]:
+                        post["image_url"] = post["image_url"].replace("http://localhost:8000", PUBLIC_BACKEND_URL)
+                
+                return posts
             else:
                 return []
         except Exception as e:
             print(f"Error fetching feed: {e}")
+            return []
+
+
+# ============================
+# MIS POSTS (PROXY) - GET /posts/user/me
+# ============================
+@router.get("/user/me")
+async def get_my_posts_proxy(request: Request):
+    token = request.cookies.get("access_token")
+    headers = {}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+        
+    async with httpx.AsyncClient() as client:
+        try:
+            # Llamamos al backend: /posts/user/me
+            resp = await client.get(f"{settings.BACKEND_URL}/posts/user/me", headers=headers, timeout=10)
+            if resp.status_code == 200:
+                posts = resp.json()
+                # CORRECCIÓN DE URLs DE IMÁGENES
+                PUBLIC_BACKEND_URL = "http://34.51.71.65:30000"
+                
+                for post in posts:
+                    if post.get("image_url") and "localhost:8000" in post["image_url"]:
+                        post["image_url"] = post["image_url"].replace("http://localhost:8000", PUBLIC_BACKEND_URL)
+                
+                return posts
+            else:
+                return []
+        except Exception as e:
+            print(f"Error fetching my posts: {e}")
             return []
