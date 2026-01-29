@@ -11,7 +11,8 @@ from app.services.users import (
     create_user,
     login_user,
     update_profile_image,
-    verify_email_code
+    verify_email_code,
+    resend_verification_code
 )
 from app.core.auth import get_current_user
 from app.db.init_db import db
@@ -22,6 +23,9 @@ router = APIRouter(prefix="/users", tags=["Users"])
 class VerifyEmailRequest(BaseModel):
     email: EmailStr
     code: str
+
+class ResendVerificationRequest(BaseModel):
+    email: EmailStr
 
 
 # ============================
@@ -104,6 +108,24 @@ async def verify_email(data: VerifyEmailRequest):
             detail="Código inválido, email no encontrado o usuario ya verificado."
         )
     return {"message": "Email verificado correctamente"}
+
+
+# ============================
+# REENVIAR EMAIL
+# ============================
+@router.post("/resend-verification")
+async def resend_verification(data: ResendVerificationRequest):
+    success = await resend_verification_code(data.email)
+    if not success:
+        # Por seguridad no decimos si existe o no, pero si falla asumimos que no se pudo
+        # o ya estaba verificado.
+        # Retornamos 400 genérico o 404 si preferimos.
+        # Si el usuario ya está verificado, frontend debería redirigir a login.
+        raise HTTPException(
+            status_code=400,
+            detail="No se pudo reenviar. Verifica el correo o si ya estás verificado."
+        )
+    return {"message": "Código reenviado correctamente"}
 
 
 # ============================

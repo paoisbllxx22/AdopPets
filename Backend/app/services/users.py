@@ -29,10 +29,31 @@ async def create_user(data, profile_image: str | None = None):
         "verification_code": verification_code
     }
 
-    result = await db.users.insert_one(new_user)
     new_user["id"] = str(result.inserted_id)
 
     return new_user
+
+
+# -----------------------------------------
+# Reenviar Código de Verificación
+# -----------------------------------------
+async def resend_verification_code(email: str):
+    user = await db.users.find_one({"email": email})
+    if not user:
+        return False
+        
+    if user.get("is_verified", False):
+        return False # Ya verificado, no reenviamos
+
+    # Generar nuevo código
+    code = str(secrets.randbelow(1000000)).zfill(6)
+    print(f"📧 [MOCK EMAIL RESEND] Nuevo código para {email}: {code}")
+
+    await db.users.update_one(
+        {"email": email},
+        {"$set": {"verification_code": code}}
+    )
+    return True
 
 
 
