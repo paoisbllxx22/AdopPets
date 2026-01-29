@@ -2,8 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: loki
-  labels:
-    app: loki
 spec:
   replicas: 1
   selector:
@@ -51,23 +49,16 @@ data:
       - url: http://loki:3100/loki/api/v1/push
 
     scrape_configs:
-      - job_name: kubernetes-pods
-        kubernetes_sd_configs:
-          - role: pod
-        relabel_configs:
-          - source_labels: [__meta_kubernetes_pod_label_app]
-            target_label: app
-          - source_labels: [__meta_kubernetes_pod_name]
-            target_label: pod
-          - source_labels: [__meta_kubernetes_namespace]
-            target_label: namespace
-          - action: replace
-            source_labels: [__meta_kubernetes_pod_container_name]
-            target_label: container
-          - replacement: /var/log/pods/*$1/**/*.log
-            separator: /
-            source_labels: [__meta_kubernetes_pod_uid, __meta_kubernetes_pod_container_name]
-            target_label: __path__
+      - job_name: kubernetes-pods-static
+        static_configs:
+        - targets:
+            - localhost
+          labels:
+            job: kubernetes-pods
+            __path__: /var/log/containers/*.log
+            
+  # Configuración simplificada: Lee directamente /var/log/containers/*.log
+  # que son enlaces simbólicos fáciles de encontrar.
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -80,12 +71,7 @@ metadata:
   name: promtail-clusterrole
 rules:
   - apiGroups: [""]
-    resources:
-      - nodes
-      - nodes/proxy
-      - services
-      - endpoints
-      - pods
+    resources: ["pods", "nodes", "services"]
     verbs: ["get", "watch", "list"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -123,30 +109,24 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /etc/promtail
-            - name: run
-              mountPath: /run/promtail
-            - name: pods
-              mountPath: /var/log/pods
-              readOnly: true
-            - name: docker
+            - name: varlog
+              mountPath: /var/log
+            - name: varlibdocker # Por si acaso
               mountPath: /var/lib/docker/containers
               readOnly: true
-            - name: rancher
-              mountPath: /var/lib/rancher
+            - name: mnt
+              mountPath: /mnt
               readOnly: true
       volumes:
         - name: config
           configMap:
             name: promtail-config
-        - name: run
+        - name: varlog
           hostPath:
-            path: /run/promtail
-        - name: pods
-          hostPath:
-            path: /var/log/pods
-        - name: docker
+            path: /var/log
+        - name: varlibdocker
           hostPath:
             path: /var/lib/docker/containers
-        - name: rancher
+        - name: mnt
           hostPath:
-            path: /var/lib/rancher
+            path: /mnt
