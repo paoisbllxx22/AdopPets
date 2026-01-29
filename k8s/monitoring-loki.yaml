@@ -131,6 +131,9 @@ spec:
             - name: docker
               mountPath: /var/lib/docker/containers
               readOnly: true
+            - name: rancher
+              mountPath: /var/lib/rancher
+              readOnly: true
       volumes:
         - name: config
           configMap:
@@ -144,3 +147,6 @@ spec:
         - name: docker
           hostPath:
             path: /var/lib/docker/containers
+        - name: rancher
+          hostPath:
+            path: /var/lib/rancher
