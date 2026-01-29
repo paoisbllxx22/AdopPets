@@ -41,36 +41,46 @@ async def login_submit(
     email: str = Form(...),
     password: str = Form(...)
 ):
-    async with httpx.AsyncClient() as client:
-        # Backend espera JSON para Login (UserLogin logic)
-        resp = await client.post(
-            f"{settings.BACKEND_URL}/users/login",
-            json={"email": email, "password": password},
-            timeout=10
+    try:
+        async with httpx.AsyncClient() as client:
+            # Backend espera JSON para Login (UserLogin logic)
+            resp = await client.post(
+                f"{settings.BACKEND_URL}/users/login",
+                json={"email": email, "password": password},
+                timeout=10
+            )
+
+        # ✅ Si el auth_service dice "no verificado" -> ir a pantalla de verificación
+        if resp.status_code == 403:
+            return RedirectResponse(url=f"/email-verify?email={email}", status_code=302)
+
+        if resp.status_code != 200:
+            return templates.TemplateResponse(
+                "login.html",
+                {"request": request, "error": "Correo o contraseña incorrectos."},
+                status_code=400
+            )
+
+        token = resp.json()["token"]
+
+        response = RedirectResponse(url="/home", status_code=302)
+        response.set_cookie(
+            key="access_token",
+            value=token,
+            httponly=True,
+            samesite="lax"
         )
+        return response
 
-    # ✅ Si el auth_service dice "no verificado" -> ir a pantalla de verificación
-    # (Adaptar si el backend devuelve un código específico para esto)
-    if resp.status_code == 403:
-        return RedirectResponse(url=f"/email-verify?email={email}", status_code=302)
-
-    if resp.status_code != 200:
+    except Exception as e:
+        print(f"🔥 LOGIN ERROR: {e}")
         return templates.TemplateResponse(
             "login.html",
-            {"request": request, "error": "Correo o contraseña incorrectos."},
-            status_code=400
+            {"request": request, "error": f"Ocurrió un error inesperado: {e}"},
+            status_code=500
         )
 
-    token = resp.json()["token"]
 
-    response = RedirectResponse(url="/home", status_code=302)
-    response.set_cookie(
-        key="access_token",
-        value=token,
-        httponly=True,
-        samesite="lax"
-    )
-    return response
 
 
 # ============================
