@@ -150,10 +150,9 @@ async def register_submit(
             status_code=400
         )
 
-    # ✅ 4️⃣ Al finalizar registro, ir a login (o home si login automático)
-    # Backend devuelve el usuario creado, pero no un token en register. 
-    # Lo mandamos a Login para que inicie sesión.
-    return RedirectResponse(url="/login", status_code=302)
+    # ✅ 4️⃣ Al finalizar registro, IR A VERIFICAR EMAIL
+    # Backend devuelve el usuario creado (y loguea el código en stdout), el usuario debe verificar.
+    return RedirectResponse(url=f"/email-verify?email={email}", status_code=302)
 
 
 # ============================

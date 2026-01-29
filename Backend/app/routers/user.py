@@ -1,21 +1,27 @@
 #routers/user.py
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Body
 from bson import ObjectId
 import uuid
 import shutil
 from fastapi import Form
+from pydantic import BaseModel, EmailStr
 
 from app.schemas.user import UserRegister, UserLogin, UserResponse
 from app.services.users import (
     create_user,
     login_user,
-    update_profile_image
+    update_profile_image,
+    verify_email_code
 )
 from app.core.auth import get_current_user
 from app.db.init_db import db
 
 
 router = APIRouter(prefix="/users", tags=["Users"])
+
+class VerifyEmailRequest(BaseModel):
+    email: EmailStr
+    code: str
 
 
 # ============================
@@ -69,12 +75,35 @@ async def register_user(
 @router.post("/login")
 async def login(data: UserLogin):
     result = await login_user(data)
+    
     if not result:
         raise HTTPException(
             status_code=401,
             detail="Credenciales inválidas"
         )
+        
+    # Verificar si el usuario no ha validado su email
+    if "error" in result and result["error"] == "not_verified":
+        raise HTTPException(
+            status_code=403,
+            detail="Usuario no verificado. Revisa tu correo."
+        )
+
     return result
+
+
+# ============================
+# VERIFICAR EMAIL
+# ============================
+@router.post("/verify-email")
+async def verify_email(data: VerifyEmailRequest):
+    success = await verify_email_code(data.email, data.code)
+    if not success:
+        raise HTTPException(
+            status_code=400,
+            detail="Código inválido, email no encontrado o usuario ya verificado."
+        )
+    return {"message": "Email verificado correctamente"}
 
 
 # ============================

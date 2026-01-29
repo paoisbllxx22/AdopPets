@@ -19,36 +19,32 @@ def _normalize_code(code: str) -> str:
     return (code or "").strip()
 
 
+
 async def _post_verify_email(client: httpx.AsyncClient, email: str, code: str) -> httpx.Response:
     """
-    Intenta verificar enviando primero JSON y si el auth_service responde 422,
-    reintenta con FORM (data=...).
-    Esto te evita el típico problema de "Auth espera JSON pero yo envío FORM" (o al revés).
+    Intenta verificar enviando primero JSON.
+    Ahora apunta al backend unificado: /users/verify-email
     """
-    url = f"{settings.AUTH_SERVICE_URL.rstrip('/')}/auth/verify-email"
+    url = f"{settings.BACKEND_URL.rstrip('/')}/users/verify-email"
 
-    # 1) Primero JSON
+    # Backend espera JSON: { "email": "...", "code": "..." }
     resp = await client.post(url, json={"email": email, "code": code}, timeout=10)
 
-    # Si el auth_service está hecho con Form(...) a veces te devuelve 422
-    if resp.status_code == 422:
-        resp = await client.post(url, data={"email": email, "code": code}, timeout=10)
-
+    # Si el backend respondiera 422 (que no debería si usamos Pydantic/JSON bien),
+    # podríamos reintentar, pero el backend está configurado para JSON (VerifyEmailRequest).
     return resp
 
 
 async def _post_resend_verification(client: httpx.AsyncClient, email: str) -> httpx.Response:
     """
-    Reenvía código de verificación (requiere endpoint en auth_service).
-    Igual que arriba: intenta JSON y si 422, reintenta con FORM.
+    Reenvía código de verificación.
     """
-    url = f"{settings.AUTH_SERVICE_URL.rstrip('/')}/auth/resend-verification"
+    # Este endpoint aun no existe en backend (TBD), pero lo dejamos apuntado
+    url = f"{settings.BACKEND_URL.rstrip('/')}/users/resend-verification"
 
     resp = await client.post(url, json={"email": email}, timeout=10)
-    if resp.status_code == 422:
-        resp = await client.post(url, data={"email": email}, timeout=10)
-
     return resp
+
 
 
 # ✅ Mostrar pantalla para ingresar código
