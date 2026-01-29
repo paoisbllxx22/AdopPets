@@ -53,8 +53,23 @@ async def create_new_post(
     }
 
     post = await create_post(data)
+    
+    # Convertir ObjectId a str para evitar errores de serialización
+    if post and "_id" in post:
+        post["_id"] = str(post["_id"])
+
     # Devolvemos JSON para que el Frontend maneje la redirección
     return {"message": "ok", "post": post}
+
+
+# Helper para serializar
+def serialize_post(post):
+    if post and "_id" in post:
+        post["_id"] = str(post["_id"])
+    return post
+
+def serialize_posts_list(posts):
+    return [serialize_post(p) for p in posts]
 
 
 # ============================
@@ -62,7 +77,8 @@ async def create_new_post(
 # ============================
 @router.get("/feed/all")
 async def feed_posts():
-    return await get_posts_feed()
+    posts = await get_posts_feed()
+    return serialize_posts_list(posts)
 
 
 # ============================
@@ -70,8 +86,8 @@ async def feed_posts():
 # ============================
 @router.get("/user/me")
 async def my_posts(user_id: str = Depends(get_current_user)):
-    return await get_user_posts(user_id)
-
+    posts = await get_user_posts(user_id)
+    return serialize_posts_list(posts)
 
 
 # ============================
@@ -82,7 +98,7 @@ async def get_post(post_id: str):
     post = await get_post_by_id(post_id)
     if not post:
         raise HTTPException(status_code=404, detail="Publicación no encontrada")
-    return post
+    return serialize_post(post)
 
 
 # ============================
