@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request, Form, UploadFile, File, Depends, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 import httpx
 from app.core.config import settings
@@ -150,3 +150,77 @@ async def get_my_posts_proxy(request: Request):
         except Exception as e:
             print(f"Error fetching my posts: {e}")
             return []
+
+
+# ============================
+# ELIMINAR POST (PROXY) - DELETE /posts/{post_id}
+# ============================
+@router.delete("/{post_id}")
+async def delete_post_proxy(request: Request, post_id: str):
+    token = request.cookies.get("access_token")
+    headers = {}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+        
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.delete(f"{settings.BACKEND_URL}/posts/{post_id}", headers=headers, timeout=10)
+            return resp.json()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================
+# EDITAR POST (PROXY) - PUT /posts/{post_id}
+# ============================
+@router.put("/{post_id}")
+async def update_post_proxy(
+    request: Request,
+    post_id: str,
+    title: str = Form(None),
+    description: str = Form(None),
+    details: str = Form(None),
+    file: UploadFile = File(None)
+):
+    token = request.cookies.get("access_token")
+    headers = {}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+        
+    data_payload = {}
+    if title: data_payload["title"] = title
+    if description: data_payload["description"] = description
+    if details: data_payload["details"] = details
+    
+    files_payload = None
+    if file and file.filename:
+        file_content = await file.read()
+        files_payload = {
+            "file": (file.filename, file_content, file.content_type)
+        }
+    
+    async with httpx.AsyncClient() as client:
+        try:
+            if files_payload:
+                resp = await client.put(
+                    f"{settings.BACKEND_URL}/posts/{post_id}",
+                    data=data_payload,
+                    files=files_payload,
+                    headers=headers,
+                    timeout=10
+                )
+            else:
+                resp = await client.put(
+                    f"{settings.BACKEND_URL}/posts/{post_id}",
+                    data=data_payload,
+                    headers=headers,
+                    timeout=10
+                )
+            
+            if resp.status_code == 200:
+                return resp.json()
+            else:
+                # Retornamos el error del back
+                return JSONResponse(status_code=resp.status_code, content=resp.json())
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
